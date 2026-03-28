@@ -4,12 +4,11 @@ import { FormEvent } from 'react';
 
 interface ChatInputProps {
   input: string;
-  placeholder: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
 }
 
-export function ChatInput({ input, placeholder, onChange, onSubmit }: ChatInputProps) {
+export function ChatInput({ input, onChange, onSubmit }: ChatInputProps) {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     onSubmit();
@@ -21,9 +20,9 @@ export function ChatInput({ input, placeholder, onChange, onSubmit }: ChatInputP
         <input
           value={input}
           onChange={(event) => onChange(event.target.value)}
-          placeholder={placeholder}
+          placeholder="브랜드 / 타겟 / 상황 / 혜택 / 특징"
           className="min-h-11 w-full flex-1 rounded-xl bg-slate-50 px-3 py-2 outline-none ring-indigo-200 transition focus:ring-2"
-          aria-label="마케팅 아이디어 입력"
+          aria-label="구조화된 마케팅 아이디어 입력"
         />
         <button
           type="submit"
@@ -32,7 +31,7 @@ export function ChatInput({ input, placeholder, onChange, onSubmit }: ChatInputP
           생성
         </button>
       </div>
-      <p className="mt-2 text-xs text-slate-500">Enter 키로 빠르게 생성할 수 있어요.</p>
+      <p className="mt-2 text-xs text-slate-500">예시 형식대로 작성하면 결과 정확도가 높아집니다.</p>
     </form>
   );
 }
