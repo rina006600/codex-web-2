@@ -10,10 +10,11 @@ interface ResultCardProps {
 export function ResultCard({ result, onCopy }: ResultCardProps) {
   return (
     <article className="rounded-2xl border border-slate-200 bg-card p-4 shadow-card">
-      <div className="mb-3 flex items-center justify-between">
-        <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
-          {result.tone}
-        </span>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">{result.channel}</span>
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{result.tone}</span>
+        </div>
         <button
           type="button"
           className="rounded-lg border border-slate-300 px-3 py-1 text-sm text-slate-700 transition hover:bg-slate-100"

@@ -1,36 +1,37 @@
-import type { Tone } from '@/types/copy';
+import type { ParsedInput, PatternKey } from '@/types/copy';
 
-export const TONE_LABELS: Tone[] = ['감성', '직관', '고급', '트렌디', '설득'];
+interface PatternArgs {
+  data: ParsedInput;
+  channelLine: string;
+}
 
-export const templates = {
-  감성: [
-    '{keyword}, 당신의 하루를 더 아름답게.',
-    '마음을 움직이는 {keyword}의 순간.',
-    '{keyword}로 오늘 분위기를 완성하세요.',
-    '당신의 감성을 닮은 {keyword}.',
-  ],
-  직관: [
-    '지금 필요한 건 바로 {keyword}.',
-    '{keyword}, 가장 빠른 선택.',
-    '간단하게 고르는 {keyword}.',
-    '{keyword}로 바로 시작하세요.',
-  ],
-  고급: [
-    '절제된 품격, {keyword}의 완성.',
-    '{keyword}, 한 단계 높은 기준.',
-    '깊이 있는 감각의 {keyword}.',
-    '{keyword}로 완성하는 프리미엄 무드.',
-  ],
-  트렌디: [
-    '요즘 감성의 중심, {keyword}.',
-    '지금 가장 핫한 {keyword}를 만나보세요.',
-    '{keyword}, 트렌드를 앞서가는 선택.',
-    '요즘은 {keyword} 하나면 충분해.',
-  ],
-  설득: [
-    '고민은 줄이고, {keyword}를 선택하세요.',
-    '{keyword}, 선택해야 할 이유는 이미 충분합니다.',
-    '지금 {keyword}를 고르면 후회하지 않습니다.',
-    '{keyword}가 필요한 순간, 답은 하나입니다.',
-  ],
+type PatternBuilder = (args: PatternArgs) => string;
+
+export const channelToneLine = {
+  SNS: '요즘 감성에 맞춰 짧고 부드럽게 전해요.',
+  배너: '한눈에 들어오는 강한 한 줄로 전달해요.',
+  랜딩: '자세한 설명으로 설득력 있게 안내해요.',
 } as const;
+
+export const patterns: Record<PatternKey, PatternBuilder[]> = {
+  brand: [
+    ({ data, channelLine }) =>
+      `${data.brand}에서 시작되는 새로운 기준. ${data.target}를 위한 ${data.feature} 경험, ${channelLine}`,
+  ],
+  problemSolution: [
+    ({ data, channelLine }) =>
+      `${data.situation}에서 무엇을 보여줘야 할지 고민되나요? 이제 ${data.brand}의 ${data.feature} 솔루션으로 해결하세요. ${channelLine}`,
+  ],
+  socialProof: [
+    ({ data, channelLine }) =>
+      `이미 많은 사람들이 선택한 ${data.brand}. ${data.target}에게 검증된 이유를 ${data.situation}에서 직접 확인해보세요. ${channelLine}`,
+  ],
+  benefit: [
+    ({ data, channelLine }) =>
+      `지금 ${data.benefit}, 놓치지 마세요. ${data.brand}의 ${data.feature} 제안을 ${data.target}에게 가장 좋은 타이밍에 전하세요. ${channelLine}`,
+  ],
+  scarcityCta: [
+    ({ data, channelLine }) =>
+      `지금 아니면 놓치는 ${data.benefit}. ${data.brand}와 함께 ${data.situation} 기회를 잡고, 지금 바로 경험해보세요. ${channelLine}`,
+  ],
+};

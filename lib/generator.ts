@@ -1,29 +1,30 @@
-import { templates, TONE_LABELS } from '@/lib/templates';
-import { pickRandom } from '@/lib/utils';
-import type { CopyResult } from '@/types/copy';
+import { parseInput } from '@/lib/parser';
+import { channelToneLine, patterns } from '@/lib/templates';
+import type { Channel, CopyResult, PatternKey, ToneLabel } from '@/types/copy';
 
-export function extractKeyword(input: string): string {
-  const cleaned = input.trim().replace(/\s+/g, ' ');
-  if (!cleaned) return '브랜드';
-
-  const words = cleaned.split(' ');
-  if (words.length === 1) return words[0];
-
-  return words.slice(-2).join(' ');
-}
+const generationPlan: Array<{ channel: Channel; tone: ToneLabel; pattern: PatternKey }> = [
+  { channel: 'SNS', tone: '감성형', pattern: 'brand' },
+  { channel: '배너', tone: '직관형', pattern: 'problemSolution' },
+  { channel: '랜딩', tone: '설득형', pattern: 'socialProof' },
+  { channel: '배너', tone: '직관형', pattern: 'benefit' },
+  { channel: 'SNS', tone: '감성형', pattern: 'scarcityCta' },
+];
 
 export function generateCopies(input: string): CopyResult[] {
-  const keyword = extractKeyword(input);
+  const data = parseInput(input);
 
-  return TONE_LABELS.map((tone) => {
-    const template = pickRandom(templates[tone]);
+  return generationPlan.map((plan, index) => {
+    const template = patterns[plan.pattern][0];
+
     return {
-      tone,
-      text: template.replace('{keyword}', keyword),
+      id: index + 1,
+      channel: plan.channel,
+      tone: plan.tone,
+      pattern: plan.pattern,
+      text: template({
+        data,
+        channelLine: channelToneLine[plan.channel],
+      }),
     };
   });
-}
-
-export function shouldShowInputHelper(input: string): boolean {
-  return input.trim().length > 0 && input.trim().length < 3;
 }
