@@ -3,7 +3,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Idea to Copy',
-  description: '아이디어 한 줄로 5가지 톤의 마케팅 카피를 만드는 클라이언트 전용 앱',
+  description: 'Supabase Edge Functions 기반 데이터셋 마케팅 카피 생성기',
 };
 
 export default function RootLayout({

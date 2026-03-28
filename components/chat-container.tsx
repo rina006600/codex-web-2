@@ -1,27 +1,39 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ChatInput } from '@/components/chat-input';
 import { Guide } from '@/components/guide';
 import { Hero } from '@/components/hero';
 import { ResultCard } from '@/components/result-card';
 import { Toast } from '@/components/toast';
-import { generateCopies } from '@/lib/generator';
-import type { CopyResult } from '@/types/copy';
+import { generateCopy, trackCopySelection } from '@/lib/copy-service';
+import { getOrCreateSessionId } from '@/lib/session';
+import type { CopyInput, CopyResult } from '@/types/copy';
+
+const initialInput: CopyInput = {
+  brand: '',
+  target: '',
+  situation: '',
+  benefit: '',
+  feature: '',
+  channel: 'sns',
+};
 
 export function ChatContainer() {
-  const [input, setInput] = useState('');
+  const [values, setValues] = useState<CopyInput>(initialInput);
   const [results, setResults] = useState<CopyResult[]>([]);
+  const [generationId, setGenerationId] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const [toastVisible, setToastVisible] = useState(false);
 
-  const handleGenerate = () => {
-    if (!input.trim()) return;
+  const isValid = useMemo(
+    () => Object.values(values).every((value) => (typeof value === 'string' ? value.trim().length > 0 : Boolean(value))),
+    [values],
+  );
 
-    setLoading(true);
-    const generated = generateCopies(input);
-    setResults(generated);
-    setLoading(false);
+  const handleFieldChange = <K extends keyof CopyInput>(field: K, value: CopyInput[K]) => {
+    setValues((prev) => ({ ...prev, [field]: value }));
   };
 
   const showCopiedToast = () => {
@@ -31,26 +43,86 @@ export function ChatContainer() {
     }, 1500);
   };
 
-  const handleCopy = async (text: string) => {
-    await navigator.clipboard.writeText(text);
+  const handleGenerate = async () => {
+    if (!isValid) {
+      setErrorMessage('모든 입력 항목을 작성해주세요.');
+      return;
+    }
+
+    setLoading(true);
+    setErrorMessage('');
+
+    try {
+      const sessionId = getOrCreateSessionId();
+      const response = await generateCopy({
+        ...values,
+        sessionId,
+      });
+
+      setResults(response.results);
+      setGenerationId(response.generationId);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : '카피 생성 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCopy = async (result: CopyResult) => {
+    await navigator.clipboard.writeText(result.text);
     showCopiedToast();
+
+    if (!generationId) return;
+
+    try {
+      await trackCopySelection({
+        sessionId: getOrCreateSessionId(),
+        generationId,
+        selectedCopyText: result.text,
+        selectedPatternType: result.patternType,
+        selectedToneLabel: result.toneLabel,
+        selectedChannel: result.channel,
+        actionType: 'copy',
+      });
+    } catch {
+      // Non-blocking analytics event
+    }
+  };
+
+  const handleSelect = async (result: CopyResult) => {
+    if (!generationId) return;
+
+    try {
+      await trackCopySelection({
+        sessionId: getOrCreateSessionId(),
+        generationId,
+        selectedCopyText: result.text,
+        selectedPatternType: result.patternType,
+        selectedToneLabel: result.toneLabel,
+        selectedChannel: result.channel,
+        actionType: 'select',
+      });
+    } catch {
+      // Non-blocking analytics event
+    }
   };
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-4xl flex-col bg-background px-4 pb-36 pt-10 md:pb-40">
+    <main className="mx-auto flex min-h-dvh w-full max-w-4xl flex-col bg-background px-4 pb-40 pt-10">
       <Hero />
       <Guide />
 
-      <section className="mb-6 flex-1 space-y-3 overflow-y-auto">
-        {results.map((result) => (
-          <ResultCard key={result.id} result={result} onCopy={handleCopy} />
+      {errorMessage && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{errorMessage}</p>}
+
+      <section className="mb-6 flex-1 space-y-3">
+        {results.map((result, index) => (
+          <ResultCard key={`${result.patternType}-${index}`} result={result} onCopy={handleCopy} onSelect={handleSelect} />
         ))}
       </section>
 
       <div className="fixed bottom-0 left-0 right-0 border-t border-slate-200 bg-background/95 p-4 backdrop-blur">
         <div className="mx-auto w-full max-w-4xl">
-          <ChatInput input={input} onChange={setInput} onSubmit={handleGenerate} />
-          {loading && <p className="mt-2 text-xs text-slate-500">문구 생성 중...</p>}
+          <ChatInput values={values} onChange={handleFieldChange} onSubmit={handleGenerate} disabled={loading} />
         </div>
       </div>
 
