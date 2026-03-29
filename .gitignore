@@ -3,3 +3,10 @@ node_modules
 out
 .vercel
 *.log
+.gstack/
+.omc/
+.omx/
+supabase/.temp/
+*.tsbuildinfo
+.env
+.env.local

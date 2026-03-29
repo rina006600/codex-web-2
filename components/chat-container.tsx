@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChatInput } from '@/components/chat-input';
 import { Guide } from '@/components/guide';
 import { Hero } from '@/components/hero';
@@ -26,6 +26,7 @@ export function ChatContainer() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [toastVisible, setToastVisible] = useState(false);
+  const inputSectionRef = useRef<HTMLDivElement | null>(null);
 
   const isValid = useMemo(
     () => Object.values(values).every((value) => (typeof value === 'string' ? value.trim().length > 0 : Boolean(value))),
@@ -62,6 +63,9 @@ export function ChatContainer() {
       setResults(response.results);
       setGenerationId(response.generationId);
     } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('generate-copy request failed', error);
+      }
       setErrorMessage(error instanceof Error ? error.message : '카피 생성 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
@@ -107,12 +111,21 @@ export function ChatContainer() {
     }
   };
 
+  useEffect(() => {
+    if (!results.length || !inputSectionRef.current) {
+      return;
+    }
+
+    inputSectionRef.current.scrollIntoView({
+      behavior: 'smooth',
+      block: 'end',
+    });
+  }, [results]);
+
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-4xl flex-col bg-background px-4 pb-40 pt-10">
+    <main className="mx-auto flex min-h-dvh w-full max-w-4xl flex-col bg-background px-4 pb-6 pt-10">
       <Hero />
       <Guide />
-
-      {errorMessage && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{errorMessage}</p>}
 
       <section className="mb-6 flex-1 space-y-3">
         {results.map((result, index) => (
@@ -120,9 +133,18 @@ export function ChatContainer() {
         ))}
       </section>
 
-      <div className="fixed bottom-0 left-0 right-0 border-t border-slate-200 bg-background/95 p-4 backdrop-blur">
+      <div
+        ref={inputSectionRef}
+        className="sticky bottom-0 z-10 mt-auto border-t border-slate-200 bg-background/95 px-0 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 backdrop-blur"
+      >
         <div className="mx-auto w-full max-w-4xl">
-          <ChatInput values={values} onChange={handleFieldChange} onSubmit={handleGenerate} disabled={loading} />
+          <ChatInput
+            values={values}
+            onChange={handleFieldChange}
+            onSubmit={handleGenerate}
+            disabled={loading}
+            errorMessage={errorMessage}
+          />
         </div>
       </div>
 

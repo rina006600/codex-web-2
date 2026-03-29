@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
+import { corsHeaders, getRuntimeConfig } from '../_shared/runtime.ts';
 
 type Channel = 'sns' | 'banner' | 'landing';
 type PatternType = 'brand_mention' | 'problem_solution' | 'social_proof' | 'benefit_emphasis' | 'scarcity_cta';
@@ -35,11 +36,6 @@ interface RuleRow {
   priority: number;
 }
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
 const requiredPatterns: PatternType[] = [
   'brand_mention',
   'problem_solution',
@@ -47,6 +43,8 @@ const requiredPatterns: PatternType[] = [
   'benefit_emphasis',
   'scarcity_cta',
 ];
+const supportedChannels: Channel[] = ['sns', 'banner', 'landing'];
+const supportedModes: Array<NonNullable<GenerateCopyRequest['mode']>> = ['dataset', 'openai'];
 
 function validateRequest(body: Partial<GenerateCopyRequest>): asserts body is GenerateCopyRequest {
   const requiredKeys: Array<keyof GenerateCopyRequest> = ['brand', 'target', 'situation', 'benefit', 'feature', 'channel', 'sessionId'];
@@ -54,6 +52,14 @@ function validateRequest(body: Partial<GenerateCopyRequest>): asserts body is Ge
     if (!body[key] || (typeof body[key] === 'string' && String(body[key]).trim().length === 0)) {
       throw new Error(`Missing required field: ${key}`);
     }
+  }
+
+  if (!supportedChannels.includes(body.channel as Channel)) {
+    throw new Error(`Unsupported channel: ${body.channel}`);
+  }
+
+  if (body.mode && !supportedModes.includes(body.mode)) {
+    throw new Error(`Unsupported mode: ${body.mode}`);
   }
 }
 
@@ -120,10 +126,8 @@ Deno.serve(async (req) => {
     validateRequest(body);
 
     const mode = body.mode ?? 'dataset';
-    const supabase = createClient(
-      Deno.env.get('NEXT_PUBLIC_SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    );
+    const { supabaseUrl, serviceRoleKey } = getRuntimeConfig(req);
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const [templatesRes, rulesRes] = await Promise.all([
       supabase
