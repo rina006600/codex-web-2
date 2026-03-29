@@ -8,6 +8,7 @@ interface ChatInputProps {
   onChange: <K extends keyof CopyInput>(field: K, value: CopyInput[K]) => void;
   onSubmit: () => void;
   disabled?: boolean;
+  errorMessage?: string;
 }
 
 const prompts: Array<{ key: keyof CopyInput; label: string; placeholder: string }> = [
@@ -24,7 +25,7 @@ const channels: Array<{ value: Channel; label: string }> = [
   { value: 'landing', label: '랜딩' },
 ];
 
-export function ChatInput({ values, onChange, onSubmit, disabled = false }: ChatInputProps) {
+export function ChatInput({ values, onChange, onSubmit, disabled = false, errorMessage = '' }: ChatInputProps) {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     onSubmit();
@@ -73,6 +74,12 @@ export function ChatInput({ values, onChange, onSubmit, disabled = false }: Chat
       >
         {disabled ? '생성 중...' : '카피 5개 생성'}
       </button>
+
+      {errorMessage ? (
+        <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700" role="alert" aria-live="polite">
+          {errorMessage}
+        </p>
+      ) : null}
     </form>
   );
 }

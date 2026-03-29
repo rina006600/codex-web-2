@@ -18,6 +18,24 @@ function getSupabaseConfig() {
   };
 }
 
+async function parseJsonResponse(response: Response) {
+  const text = await response.text();
+
+  if (!text) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    if (!response.ok) {
+      throw new Error(text);
+    }
+
+    throw new Error('Supabase function returned a non-JSON response');
+  }
+}
+
 async function invokeFunction<T>(functionName: string, body: unknown): Promise<T> {
   const { supabaseUrl, supabaseAnonKey } = getSupabaseConfig();
 
@@ -31,10 +49,16 @@ async function invokeFunction<T>(functionName: string, body: unknown): Promise<T
     body: JSON.stringify(body),
   });
 
-  const json = await response.json();
+  const json = await parseJsonResponse(response);
 
   if (!response.ok) {
-    throw new Error(json.error ?? `Failed to invoke function: ${functionName}`);
+    const errorMessage =
+      json && typeof json.error === 'string' ? json.error : `Failed to invoke function: ${functionName}`;
+    throw new Error(errorMessage);
+  }
+
+  if (!json) {
+    throw new Error(`Supabase function returned an empty response: ${functionName}`);
   }
 
   return json as T;

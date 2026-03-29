@@ -61,11 +61,9 @@ supabase/
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
-SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY
-OPENAI_API_KEY=
 ```
 
-> `SUPABASE_SERVICE_ROLE_KEY`는 Edge Function 런타임에서만 사용하며 브라우저에 노출하면 안 됩니다.
+> 루트 `.env.local`에는 브라우저에서 필요한 공개 값만 넣습니다.
 
 ## 로컬 실행
 
@@ -96,10 +94,10 @@ supabase functions deploy track-copy-selection --no-verify-jwt
 
 ```bash
 supabase secrets set \
-  NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co \
-  SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY \
   OPENAI_API_KEY=OPTIONAL_FOR_FUTURE
 ```
+
+> Supabase-hosted Edge Functions는 기본 시크릿으로 `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`를 제공합니다. 이 프로젝트는 함수 런타임에서 `SUPABASE_URL`을 우선 사용하고, 필요 시 요청 URL origin으로 fallback 합니다.
 
 ## Vercel 배포 가이드
 
